@@ -89,9 +89,8 @@ class ArxivPaper:
                     logger.warning(f"Source for {self.arxiv_id} not found (404). Skipping source analysis.")
                     return None # 直接返回 None，后续依赖 tex 的代码会安全地处理
                 else:
-                    # 如果是其他 HTTP 错误 (如 503)，这可能是临时性问题，值得记录下来
-                    logger.error(f"HTTP Error {e.code} when downloading source for {self.arxiv_id}: {e.reason}")
-                    raise # 重新抛出异常，因为这可能是个需要关注的严重问题
+                    logger.warning(f"HTTP Error {e.code} when downloading source for {self.arxiv_id}: {e.reason}. Skipping source analysis.")
+                    return None
             except Exception as e:
                 logger.error(f"Error when downloading source for {self.arxiv_id}: {e}")
                 return None
@@ -159,15 +158,25 @@ class ArxivPaper:
                 logger.debug(f"Failed to find main tex file of {self.arxiv_id}: No tex file containing the document block.")
                 file_contents["all"] = None
         return file_contents
+
+    @cached_property
+    def tex_content(self) -> Optional[str]:
+        if self.tex is None:
+            return None
+        content = self.tex.get("all")
+        if isinstance(content, str) and content:
+            return content
+        pieces = [value for value in self.tex.values() if isinstance(value, str) and value]
+        if not pieces:
+            return None
+        return "\n".join(pieces)
     
     @cached_property
     def tldr(self) -> str:
         introduction = ""
         conclusion = ""
-        if self.tex is not None:
-            content = self.tex.get("all")
-            if content is None:
-                content = "\n".join(self.tex.values())
+        content = self.tex_content
+        if content is not None:
             #remove cite
             content = re.sub(r'~?\\cite.?\{.*?\}', '', content)
             #remove figure
@@ -215,10 +224,8 @@ class ArxivPaper:
 
     @cached_property
     def affiliations(self) -> Optional[list[str]]:
-        if self.tex is not None:
-            content = self.tex.get("all")
-            if content is None:
-                content = "\n".join(self.tex.values())
+        content = self.tex_content
+        if content is not None:
             #search for affiliations
             possible_regions = [r'\\author.*?\\maketitle',r'\\begin{document}.*?\\begin{abstract}']
             matches = [re.search(p, content, flags=re.DOTALL) for p in possible_regions]
@@ -254,3 +261,4 @@ class ArxivPaper:
                 logger.debug(f"Failed to extract affiliations of {self.arxiv_id}: {e}")
                 return None
             return affiliations
+        return None
