@@ -20,6 +20,8 @@ llm:
 source:
   arxiv:
     category: ["cs.AI","cs.CV","cs.LG","cs.CL"]
+    include_cross_list: false
+    retrieval_strategy: rss_first # Roll back to the old API-first behavior by changing this to legacy_api.
 
 executor:
   debug: ${oc.env:DEBUG,null}

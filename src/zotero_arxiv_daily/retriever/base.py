@@ -21,10 +21,17 @@ class BaseRetriever(ABC):
     def convert_to_paper(self, raw_paper:RawPaperItem) -> Paper | None:
         pass
 
+    def conversion_delay_seconds(self) -> float:
+        return 1
+
+    def prepare_selected_papers(self, papers: list[Paper]) -> list[Paper]:
+        return papers
+
     def retrieve_papers(self) -> list[Paper]:
         raw_papers = self._retrieve_raw_papers()
         logger.info("Processing papers...")
         papers = []
+        conversion_delay = self.conversion_delay_seconds()
         for raw_paper in tqdm(raw_papers, total=len(raw_papers), desc="Converting papers"):
             try:
                 paper = self.convert_to_paper(raw_paper)
@@ -33,7 +40,8 @@ class BaseRetriever(ABC):
                 continue
             if paper is not None:
                 papers.append(paper)
-            sleep(1)
+            if conversion_delay > 0:
+                sleep(conversion_delay)
         return papers
 
 registered_retrievers = {}

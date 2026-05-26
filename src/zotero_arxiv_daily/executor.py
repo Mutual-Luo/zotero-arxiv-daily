@@ -111,6 +111,8 @@ class Executor:
             logger.info("Reranking papers...")
             reranked_papers = self.reranker.rerank(all_papers, corpus)
             reranked_papers = reranked_papers[:self.config.executor.max_paper_num]
+            for retriever in self.retrievers.values():
+                reranked_papers = retriever.prepare_selected_papers(reranked_papers)
             logger.info("Generating TLDR and affiliations...")
             for p in tqdm(reranked_papers):
                 p.generate_tldr(self.openai_client, self.config.llm)
