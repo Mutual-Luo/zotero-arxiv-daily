@@ -43,10 +43,17 @@ reranker:
     base_url: null # API URL of your embedding model API. Example: https://api.openai.com/v1
     model: null # The model name of the embedding model. Example: text-embedding-3-large
     batch_size: null # The batch size for embedding API requests. Adjust to match your provider's limit. Example: 64
+  llm:
+    key: null # API Key of your chat LLM API. Example: sk-xxx
+    base_url: null # API URL of your chat LLM API. Example: https://api.openai.com/v1
+    model: null # The chat model used to score relevance. Example: claude-opus-4-8
+    batch_size: 20 # Number of candidate papers scored per LLM request.
+    profile_size: 50 # Number of most-recent Zotero papers used as the interest profile.
+    max_tokens: 4096 # Max output tokens per scoring request.
 
 executor:
   debug: false # Whether to use debug mode. Example: true
   send_empty: false # Whether to send an empty email even if no new papers today. Example: true
   max_paper_num: 50 # The maximum number of the papers presented in the email. Example: 100
   source: ??? # The sources of papers to retrieve. Example: ['arxiv','biorxiv','medrxiv']
-  reranker: local # The reranker to use. Example: 'local' or 'api'
+  reranker: local # The reranker to use. Example: 'local', 'api', or 'llm'
